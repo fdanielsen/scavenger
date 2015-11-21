@@ -12,7 +12,20 @@ Install clojure dependencies with:
 
     $ lein deps
 
+Set up the Datomic database by running:
+
+    $ lein run -m clojure.main script/init-datomic.clj
+
 ## Usage
+
+Start the Datomic database first. Given that the Datomic binaries are on your
+path, run:
+
+    $ transactor <absolute path to project root>/transactor.properties
+
+If this is the first startup, initialize the database by running the following:
+
+    $ lein run -m clojure.main script/init-datomic.clj
 
 Start the development API server with:
 

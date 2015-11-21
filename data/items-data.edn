@@ -1,0 +1,5 @@
+[
+  {:item/name "Multebær", :db/id #db/id [:db.part/user -100001]}
+  {:item/name "Steinsopp", :db/id #db/id [:db.part/user -100002]}
+  {:item/name "Ramsløk", :db/id #db/id [:db.part/user -100003]}
+]
