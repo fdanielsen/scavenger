@@ -11,7 +11,8 @@
                  [compojure "1.4.0"]
                  [org.omcljs/om "1.0.0-alpha22"]
                  [figwheel-sidecar "0.5.0-SNAPSHOT" :scope "test"]
-                 [com.datomic/datomic-free "0.9.5327" :exclusions [joda-time]]]
+                 [com.datomic/datomic-free "0.9.5327" :exclusions [joda-time]]
+                 [datascript "0.13.3"]]
   :main ^:skip-aot scavenger.core
   :target-path "target/%s"
   :plugins [[lein-ring "0.8.11"]]
