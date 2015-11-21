@@ -15,6 +15,4 @@
                  [datascript "0.13.3"]]
   :main ^:skip-aot scavenger.core
   :target-path "target/%s"
-  :plugins [[lein-ring "0.8.11"]]
-  :profiles {:uberjar {:aot :all}}
-  :ring {:handler scavenger.core/app})
+  :profiles {:uberjar {:aot :all}})

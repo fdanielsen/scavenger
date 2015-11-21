@@ -27,14 +27,7 @@ If this is the first startup, initialize the database by running the following:
 
     $ lein run -m clojure.main script/init-datomic.clj
 
-Start the development API server with:
-
-    $ lein ring server-headless
-
-Currently the server only outputs a static response on http://localhost:3000/
-but will be expanded to serve API responses for the client app.
-
-Start interactive REPL for client side app with:
+Start backend API server, with interactive client side REPL:
 
     $ lein run -m clojure.main script/figwheel.clj
 

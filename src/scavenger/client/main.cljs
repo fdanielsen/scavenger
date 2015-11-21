@@ -12,7 +12,7 @@
 
 (enable-console-print!)
 
-(def api-url "http://localhost:3000")
+(def api-url "http://localhost:3449")
 
 ; Utility function to send XHR requests with correct content type and parse
 ; the EDN response appropriately.
