@@ -1,11 +1,28 @@
 (ns scavenger.client.main
-  (:require [goog.dom :as gdom]
+  (:require [cljs.reader :as reader]
             [om.next :as om :refer-macros [defui]]
             [om.dom :as dom]
             [datascript.core :as d]
-            [google.maps.react]))
+            [goog.dom :as gdom]
+            [goog.events :as events]
+            [google.maps.react])
+  (:import [goog.net XhrIo]
+           goog.net.EventType
+           [goog.events EventType]))
 
 (enable-console-print!)
+
+; Utility function to send XHR requests with correct content type and parse
+; the EDN response appropriately.
+; TODO: Use core.async to avoid on-complete callback
+(defn edn-xhr [{:keys [method url data on-complete]}]
+  (let [xhr (XhrIo.)]
+    (events/listen xhr goog.net.EventType.COMPLETE
+      (fn [e]
+        (on-complete (reader/read-string (.getResponseText xhr)))))
+    (. xhr
+       (send url method (when data (pr-str data))
+         #js {"Content-Type" "application/edn"}))))
 
 ; Local datascript state storage
 (def conn (d/create-conn {}))
@@ -90,6 +107,12 @@
   (om/reconciler
     {:state conn
      :parser (om/parser {:read read :mutate mutate})}))
+
+; Load all items from API
+(edn-xhr {:method "GET"
+          :url "http://localhost:3000/items"
+          :on-complete (fn [data]
+                         (d/transact! conn data))})
 
 ; Start render loop!
 (om/add-root! reconciler
