@@ -1,7 +1,14 @@
 (ns scavenger.core
-  (:require
-    [ring.util.response :as r]))
+  (:require [compojure.core :refer :all]
+            [compojure.route :as route]
+            [ring.middleware.defaults :refer [wrap-defaults site-defaults]]))
 
-(defn handler [request]
-  (-> (r/response "Let's go scavenging!")
-      (r/content-type "text/html")))
+(defroutes app-routes
+  (GET "/" []
+       "Let's go scavenging!")
+  (GET "/:name" [name]
+       (str "Hello, " name ", let's go scavenging!"))
+  (route/not-found "Page not found"))
+
+(def app
+  (wrap-defaults app-routes site-defaults))

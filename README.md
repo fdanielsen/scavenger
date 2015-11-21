@@ -29,7 +29,7 @@ If this is the first startup, initialize the database by running the following:
 
 Start the development API server with:
 
-    $ lein ring server
+    $ lein ring server-headless
 
 Currently the server only outputs a static response on http://localhost:3000/
 but will be expanded to serve API responses for the client app.
