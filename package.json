@@ -1,0 +1,27 @@
+{
+  "name": "scavenger",
+  "version": "0.1.0",
+  "description": "The Scavenger App",
+  "main": "index.js",
+  "directories": {
+    "doc": "doc",
+    "test": "test"
+  },
+  "dependencies": {
+    "google-map-react": "^0.9.3"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fdanielsen/scavenger.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/fdanielsen/scavenger/issues"
+  },
+  "homepage": "https://github.com/fdanielsen/scavenger#readme"
+}

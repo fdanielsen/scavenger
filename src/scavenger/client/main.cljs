@@ -1,7 +1,8 @@
 (ns scavenger.client.main
   (:require [goog.dom :as gdom]
             [om.next :as om :refer-macros [defui]]
-            [om.dom :as dom]))
+            [om.dom :as dom]
+            [google.maps.react]))
 
 ; Local app state
 (def app-state
@@ -32,6 +33,8 @@
 
 (def items-list (om/factory ItemsList))
 
+(def google-map (js/React.createFactory js/GoogleMapReact))
+
 ; Main application component
 (defui App
   static om/IQuery
@@ -42,7 +45,10 @@
     (let [{:keys [items]} (om/props this)]
       (dom/div nil
         (dom/h1 nil "Scavenger items")
-        (items-list items)))))
+        (items-list items)
+        (dom/div (clj->js {:style {:width "500px" :height "500px"}})
+          (google-map (clj->js {:center {:lat 59.974289 :lng 10.728749}
+                                :zoom 13})))))))
 
 (def app (om/factory App))
 
