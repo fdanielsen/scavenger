@@ -12,11 +12,14 @@
 
 (enable-console-print!)
 
+(def api-url "http://localhost:3000")
+
 ; Utility function to send XHR requests with correct content type and parse
 ; the EDN response appropriately.
 ; TODO: Use core.async to avoid on-complete callback
-(defn edn-xhr [{:keys [method url data on-complete]}]
-  (let [xhr (XhrIo.)]
+(defn edn-xhr [{:keys [method path data on-complete]}]
+  (let [xhr (XhrIo.)
+        url (str api-url path)]
     (events/listen xhr goog.net.EventType.COMPLETE
       (fn [e]
         (on-complete (reader/read-string (.getResponseText xhr)))))
@@ -40,10 +43,20 @@
 (defmulti mutate om/dispatch)
 
 ; Add a single item
+; Persists to the backend API first, before adding the complete
+; item from the API response to the locale state cache.
+; TODO: Add to local state cache immediately, updating with response
+; data and reverting local transaction if persisting fails
 (defmethod mutate 'items/add
   [{:keys [state]} _ entity]
   {:value {:keys [:items]}
-   :action (fn [] (d/transact! state [entity]))})
+   :action (fn []
+             (edn-xhr {:method "POST"
+                       :path "/items"
+                       :data entity
+                       :on-complete
+                       (fn [data]
+                         (d/transact! state [data]))}))})
 
 ; Scavenger items list
 (defui ItemsList
@@ -110,7 +123,7 @@
 
 ; Load all items from API
 (edn-xhr {:method "GET"
-          :url "http://localhost:3000/items"
+          :path "/items"
           :on-complete (fn [data]
                          (d/transact! conn data))})
 
