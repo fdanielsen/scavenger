@@ -1,14 +1,23 @@
 (ns scavenger.core
   (:require [compojure.core :refer :all]
             [compojure.route :as route]
-            [ring.middleware.defaults :refer [wrap-defaults site-defaults]]))
+            [ring.middleware.defaults :refer [wrap-defaults site-defaults]]
+            [ring.util.response :refer [response]])
+  (:use [datomic.api :only [db q] :as d]))
+
+(def uri "datomic:free://localhost:4334/items")
+
+(def conn (d/connect uri))
+
+(defn get-all-items []
+  (map first (q '[:find (pull ?c [*]) :where [?c item/name]] (db conn))))
 
 (defroutes app-routes
-  (GET "/" []
-       "Let's go scavenging!")
-  (GET "/:name" [name]
-       (str "Hello, " name ", let's go scavenging!"))
+  (GET "/items" []
+    (response (str (into [] (get-all-items)))))
+  (POST "/items" []
+    "OK")
   (route/not-found "Page not found"))
 
 (def app
-  (wrap-defaults app-routes site-defaults))
+  (wrap-defaults app-routes (assoc site-defaults :security nil)))
