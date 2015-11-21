@@ -16,9 +16,11 @@
   (GET "/items" []
     (response (str (into [] (get-all-items)))))
   (POST "/items" {body :body}
-    (let [data (merge (read-string (slurp body)) {:db/id (d/tempid :items)})]
-      @(d/transact conn [data]))
-    "OK")
+    (let [tempid (d/tempid :items)
+          data (merge (read-string (slurp body)) {:db/id tempid})
+          tx @(d/transact conn [data])
+          id (d/resolve-tempid (db conn) (:tempids tx) tempid)]
+      (response (str (d/touch (d/entity (db conn) id))))))
   (route/not-found "Page not found"))
 
 (def app
