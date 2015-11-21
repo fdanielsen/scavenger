@@ -15,7 +15,9 @@
 (defroutes app-routes
   (GET "/items" []
     (response (str (into [] (get-all-items)))))
-  (POST "/items" []
+  (POST "/items" {body :body}
+    (let [data (merge (read-string (slurp body)) {:db/id (d/tempid :items)})]
+      @(d/transact conn [data]))
     "OK")
   (route/not-found "Page not found"))
 
