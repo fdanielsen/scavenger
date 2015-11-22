@@ -42,18 +42,56 @@
 ; Mutator for state
 (defmulti mutate om/dispatch)
 
+(defmethod mutate 'observations/add [{:keys [state]} _ entity]
+  {:value {:keys [:observations]}
+   :action
+   (fn []
+     (edn-xhr
+      {:method "POST"
+       :path "/observations"
+       :data (merge entity {:observation/lat 60.029427 :observation/lng 9.955025})
+       :on-complete (fn [data] (d/transact! state [data]))}))})
+
 ; Scavenger sorts list
 (defui SortsList
   Object
   (render [this]
-    (let [sorts (om/props this)]
-      (apply dom/ul nil
+    (let [{:keys [sorts onSelect]} (om/props this)]
+      (apply
+       dom/select #js
+       {:onChange
+        (fn [e]
+          (let [value (.. e -target -value)]
+            (onSelect (if (empty? value) nil (reader/read-string value)))))}
+       (cons
+        (dom/option #js {:value ""} "-- Select sort --")
         (map
-          (fn [sort]
-            (dom/li nil (:sort/name sort)))
-          sorts)))))
+         (fn [sort]
+           (dom/option #js {:value (:db/id sort)} (:sort/name sort)))
+         sorts))))))
 
 (def sorts-list (om/factory SortsList))
+
+(defui AddObservation
+  static om/IQuery
+  (query [this] [:observations])
+  Object
+  (render [this]
+    (let [sorts (om/props this)]
+      (dom/div
+       nil
+       (sorts-list
+        {:sorts sorts
+         :onSelect (fn [sort-id] (om/set-state! this {:sort-id sort-id}))})
+       (dom/button
+        #js {:onClick
+             (fn [e]
+               (let [{:keys [sort-id]} (om/get-state this)]
+                 (om/transact!
+                  this `[(observations/add {:observation/sort ~sort-id})])))}
+        "New observation")))))
+
+(def add-observation (om/factory AddObservation))
 
 ; Keep state property for name text in AddSort component instance up to date
 (defn update-state [component event]
@@ -70,7 +108,7 @@
     (let [{:keys [sorts]} (om/props this)]
       (dom/div nil
         (dom/h1 nil "Scavenger sorts")
-        (sorts-list sorts)
+        (add-observation sorts)
         (maps/google-map {:center {:lat 60 :lng 10},
                      :zoom 12}
           (maps/marker {:lat 60 :lng 10})
