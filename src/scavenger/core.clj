@@ -11,17 +11,28 @@
 (def conn (d/connect uri))
 
 (defn get-sorts []
-  (map first (q '[:find (pull ?c [*]) :where [?c sort/name]] (db conn))))
+  (map first (q '[:find (pull ?s [*]) :where [?s sort/name]] (db conn))))
 
-(defn get-observations [& [sort]]
-  (let [query
-        (if sort
-          '[:find (pull ?c [*])
-            :in $ ?sort
-            :where [?c observation/sort ?sort]]
-          '[:find (pull ?c [*])
-            :where [?c observation/sort]])]
-    (map first (q query (db conn) sort))))
+(defn get-observations
+  ([]
+   (let [query '[:find (pull ?o [*]) :where [?o observation/sort]]]
+     (map first (q query (db conn)))))
+  ([sort]
+   (let [query '[:find (pull ?o [*]) :in $ ?sort :where
+                 [?o observation/sort ?sort]]]
+     (map first (q query (db conn) sort))))
+  ([sort lat1 lng1 lat2 lng2]
+   (let [[lat-min lat-max] (clojure.core/sort (list lat1 lat2))
+         [lng-min lng-max] (clojure.core/sort (list lng1 lng2))
+         query '[:find (pull ?o [*])
+                 :in $ ?sort ?lat-min ?lat-max ?lng-min ?lng-max
+                 :where
+                 [?o observation/sort ?sort]
+                 [?o observation/lat ?lat]
+                 [?o observation/lng ?lng]
+                 [(< ?lat-min ?lat)] [(< ?lat ?lat-max)]
+                 [(< ?lng-min ?lng)] [(< ?lng ?lng-max)]]]
+     (map first (q query (db conn) sort lat-min lat-max lng-min lng-max)))))
 
 (defn add-observation [edn-data]
   (let [tempid (d/tempid :observations)
@@ -41,6 +52,9 @@
     (gen-response (vec (get-observations))))
   (GET "/observations/:sort" [sort :<< as-int]
     (gen-response (vec (get-observations sort))))
+  (GET "/observations/:sort/:lat1/:lng1/:lat2/:lng2" [sort lat1 lng1 lat2 lng2]
+    (let [args (map read-string (list sort lat1 lng1 lat2 lng2))]
+      (gen-response (vec (apply get-observations args)))))
   (POST "/observations" {body :body}
     (gen-response (add-observation (read-string (slurp body)))))
   (GET "/" []

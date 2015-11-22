@@ -10,6 +10,10 @@ GET http://localhost:3449/observations
 
 GET http://localhost:3449/observations/277076930200554
 
+# Get observation by sort within a location
+
+GET http://localhost:3449/observations/277076930200554/59.979978/10.721474/59.969842/10.735079
+
 # Add a new observation
 
 POST http://localhost:3449/observations
