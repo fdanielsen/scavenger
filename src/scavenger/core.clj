@@ -12,15 +12,20 @@
 (defn get-all-items []
   (map first (q '[:find (pull ?c [*]) :where [?c item/name]] (db conn))))
 
+(defn generate-response [data & [status]]
+  {:status (or status 200)
+   :headers {"Content-Type" "application/edn"}
+   :body (pr-str data)})
+
 (defroutes app-routes
   (GET "/items" []
-    (response (str (into [] (get-all-items)))))
+    (generate-response (into [] (get-all-items))))
   (POST "/items" {body :body}
     (let [tempid (d/tempid :items)
           data (merge (read-string (slurp body)) {:db/id tempid})
           tx @(d/transact conn [data])
           id (d/resolve-tempid (db conn) (:tempids tx) tempid)]
-      (response (str (d/touch (d/entity (db conn) id))))))
+      (generate-response (d/touch (d/entity (db conn) id)))))
   (GET "/" []
     (-> (resource-response "index.html" {:root "public"})
         (content-type "text/html")))
