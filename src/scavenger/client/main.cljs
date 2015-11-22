@@ -28,7 +28,7 @@
          #js {"Content-Type" "application/edn"}))))
 
 ; Local datascript state storage
-(def conn (d/create-conn {}))
+(defonce conn (d/create-conn {}))
 
 ; Reader for state
 (defmulti read om/dispatch)
