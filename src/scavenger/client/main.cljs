@@ -33,55 +33,55 @@
 ; Reader for state
 (defmulti read om/dispatch)
 
-(defmethod read :items
+(defmethod read :sorts
   [{:keys [state query]} key params]
   {:value (d/q '[:find [(pull ?e [*]) ...]
-                 :where [?e :item/name]]
+                 :where [?e :sort/name]]
                (d/db state) query)})
 
 ; Mutator for state
 (defmulti mutate om/dispatch)
 
-; Add a single item
+; Add a single sort
 ; Persists to the backend API first, before adding the complete
-; item from the API response to the locale state cache.
+; sort from the API response to the locale state cache.
 ; TODO: Add to local state cache immediately, updating with response
 ; data and reverting local transaction if persisting fails
-(defmethod mutate 'items/add
+(defmethod mutate 'sorts/add
   [{:keys [state]} _ entity]
-  {:value {:keys [:items]}
+  {:value {:keys [:sorts]}
    :action (fn []
              (edn-xhr {:method "POST"
-                       :path "/items"
+                       :path "/sorts"
                        :data entity
                        :on-complete
                        (fn [data]
                          (d/transact! state [data]))}))})
 
-; Scavenger items list
-(defui ItemsList
+; Scavenger sorts list
+(defui SortsList
   Object
   (render [this]
-    (let [items (om/props this)]
+    (let [sorts (om/props this)]
       (apply dom/ul nil
         (map
-          (fn [item]
-            (dom/li nil (:item/name item)))
-          items)))))
+          (fn [sort]
+            (dom/li nil (:sort/name sort)))
+          sorts)))))
 
-(def items-list (om/factory ItemsList))
+(def sorts-list (om/factory SortsList))
 
 (def google-map (js/React.createFactory js/GoogleMapReact))
 
-; Keep state property for name text in AddItem component instance up to date
+; Keep state property for name text in AddSort component instance up to date
 (defn update-state [component event]
   (om/update-state! component assoc
     :name-text (.. event -target -value)))
 
-(defui AddItem
+(defui AddSort
   static om/IQuery
   (query [this]
-    [:items])
+    [:sorts])
   Object
   (render [this]
     (dom/div nil
@@ -92,26 +92,23 @@
              (fn [e]
                (let [value (om/get-state this :name-text)]
                  (om/transact! this
-                    `[(items/add {:item/name ~value})])))}
-        "Add item!"))))
+                    `[(sorts/add {:sort/name ~value})])))}
+        "Add sort!"))))
 
-(def add-item (om/factory AddItem))
+(def add-sort (om/factory AddSort))
 
 ; Main application component
 (defui App
   static om/IQuery
   (query [this]
-    [:items])
+    [:sorts])
   Object
   (render [this]
-    (let [{:keys [items]} (om/props this)]
+    (let [{:keys [sorts]} (om/props this)]
       (dom/div nil
-        (dom/h1 nil "Scavenger items")
-        (items-list items)
-        (add-item)
-        (dom/div (clj->js {:style {:width "500px" :height "500px"}})
-          (google-map (clj->js {:center {:lat 59.974289 :lng 10.728749}
-                                :zoom 13})))))))
+        (dom/h1 nil "Scavenger sorts")
+        (sorts-list sorts)
+        (add-sort)
 
 (def app (om/factory App))
 
@@ -121,9 +118,9 @@
     {:state conn
      :parser (om/parser {:read read :mutate mutate})}))
 
-; Load all items from API
+; Load all sorts from API
 (edn-xhr {:method "GET"
-          :path "/items"
+          :path "/sorts"
           :on-complete (fn [data]
                          (d/transact! conn data))})
 
