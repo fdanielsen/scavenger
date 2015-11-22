@@ -1,0 +1,18 @@
+# Get all sorts
+
+GET http://localhost:3449/sorts
+
+# Get all observations
+
+GET http://localhost:3449/observations
+
+# Get observation by sort
+
+GET http://localhost:3449/observations/277076930200554
+
+# Add a new observation
+
+POST http://localhost:3449/observations
+{
+  :observation/sort 277076930200556
+}

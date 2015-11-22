@@ -1,5 +1,6 @@
 (ns scavenger.core
   (:require [compojure.core :refer :all]
+            [compojure.coercions :refer [as-int]]
             [compojure.route :as route]
             [ring.middleware.defaults :refer [wrap-defaults site-defaults]]
             [ring.util.response :refer [header content-type response resource-response]])
@@ -12,8 +13,15 @@
 (defn get-sorts []
   (map first (q '[:find (pull ?c [*]) :where [?c sort/name]] (db conn))))
 
-(defn get-observations []
-  (map first (q '[:find (pull ?c [*]) :where [?c observation/sort]] (db conn))))
+(defn get-observations [& [sort]]
+  (let [query
+        (if sort
+          '[:find (pull ?c [*])
+            :in $ ?sort
+            :where [?c observation/sort ?sort]]
+          '[:find (pull ?c [*])
+            :where [?c observation/sort]])]
+    (map first (q query (db conn) sort))))
 
 (defn add-observation [edn-data]
   (let [tempid (d/tempid :observations)
@@ -31,9 +39,10 @@
     (gen-response (vec (get-sorts))))
   (GET "/observations" []
     (gen-response (vec (get-observations))))
+  (GET "/observations/:sort" [sort :<< as-int]
+    (gen-response (vec (get-observations sort))))
   (POST "/observations" {body :body}
-    (gen-response
-     (vec (add-observation (read-string (slurp body))))))
+    (gen-response (add-observation (read-string (slurp body)))))
   (GET "/" []
     (-> (resource-response "index.html" {:root "public"})
         (content-type "text/html")))
