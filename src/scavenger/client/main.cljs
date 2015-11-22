@@ -39,8 +39,17 @@
                  :where [?e :sort/name]]
                (d/db state) query)})
 
+(defmethod read :observations
+  [{:keys [state query]} key params]
+  {:value (d/q '[:find [(pull ?e [*]) ...]
+                 :where [?e :observation/sort]]
+               (d/db state) query)})
+
 ; Mutator for state
 (defmulti mutate om/dispatch)
+
+(defn rand-range [min max]
+  (+ min (* (rand) (- max min))))
 
 (defmethod mutate 'observations/add [{:keys [state]} _ entity]
   {:value {:keys [:observations]}
@@ -49,7 +58,8 @@
      (edn-xhr
       {:method "POST"
        :path "/observations"
-       :data (merge entity {:observation/lat 60.029427 :observation/lng 9.955025})
+       :data (merge entity {:observation/lat (rand-range 59.969842 59.979978)
+                            :observation/lng (rand-range 10.735079 10.721474)})
        :on-complete (fn [data] (d/transact! state [data]))}))})
 
 ; Scavenger sorts list
@@ -102,17 +112,19 @@
 (defui App
   static om/IQuery
   (query [this]
-    [:sorts])
+    [:sorts :observations])
   Object
   (render [this]
-    (let [{:keys [sorts]} (om/props this)]
+    (let [{:keys [sorts observations]} (om/props this)]
       (dom/div nil
         (dom/h1 nil "Scavenger sorts")
         (add-observation sorts)
-        (maps/google-map {:center {:lat 60 :lng 10},
-                     :zoom 12}
-          (maps/marker {:lat 60 :lng 10})
-          (maps/marker {:lat 60.01 :lng 10.01}))))))
+        (maps/google-map
+         {:center {:lat 59.974021 :lng 10.728273}, :zoom 12}
+         (map
+          (fn [o] (maps/marker {:lat (:observation/lat o)
+                                :lng (:observation/lng o)}))
+              observations))))))
 
 (def app (om/factory App))
 
@@ -125,6 +137,12 @@
 ; Load all sorts from API
 (edn-xhr {:method "GET"
           :path "/sorts"
+          :on-complete (fn [data]
+                         (d/transact! conn data))})
+
+; Load all observations from API
+(edn-xhr {:method "GET"
+          :path "/observations"
           :on-complete (fn [data]
                          (d/transact! conn data))})
 
