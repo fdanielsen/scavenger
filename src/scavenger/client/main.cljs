@@ -42,22 +42,6 @@
 ; Mutator for state
 (defmulti mutate om/dispatch)
 
-; Add a single sort
-; Persists to the backend API first, before adding the complete
-; sort from the API response to the locale state cache.
-; TODO: Add to local state cache immediately, updating with response
-; data and reverting local transaction if persisting fails
-(defmethod mutate 'sorts/add
-  [{:keys [state]} _ entity]
-  {:value {:keys [:sorts]}
-   :action (fn []
-             (edn-xhr {:method "POST"
-                       :path "/sorts"
-                       :data entity
-                       :on-complete
-                       (fn [data]
-                         (d/transact! state [data]))}))})
-
 ; Scavenger sorts list
 (defui SortsList
   Object
@@ -76,25 +60,6 @@
   (om/update-state! component assoc
     :name-text (.. event -target -value)))
 
-(defui AddSort
-  static om/IQuery
-  (query [this]
-    [:sorts])
-  Object
-  (render [this]
-    (dom/div nil
-      (dom/input #js {:onChange #(update-state this %)
-                      :value (om/get-state this :name-text)})
-      (dom/button
-        #js {:onClick
-             (fn [e]
-               (let [value (om/get-state this :name-text)]
-                 (om/transact! this
-                    `[(sorts/add {:sort/name ~value})])))}
-        "Add sort!"))))
-
-(def add-sort (om/factory AddSort))
-
 ; Main application component
 (defui App
   static om/IQuery
@@ -106,7 +71,6 @@
       (dom/div nil
         (dom/h1 nil "Scavenger sorts")
         (sorts-list sorts)
-        (add-sort)
         (maps/google-map {:center {:lat 60 :lng 10},
                      :zoom 12}
           (maps/marker {:lat 60 :lng 10})
