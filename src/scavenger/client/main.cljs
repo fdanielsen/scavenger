@@ -5,7 +5,7 @@
             [datascript.core :as d]
             [goog.dom :as gdom]
             [goog.events :as events]
-            [google.maps.react])
+            [scavenger.client.maps :as maps])
   (:import [goog.net XhrIo]
            goog.net.EventType
            [goog.events EventType]))
@@ -71,8 +71,6 @@
 
 (def sorts-list (om/factory SortsList))
 
-(def google-map (js/React.createFactory js/GoogleMapReact))
-
 ; Keep state property for name text in AddSort component instance up to date
 (defn update-state [component event]
   (om/update-state! component assoc
@@ -109,6 +107,10 @@
         (dom/h1 nil "Scavenger sorts")
         (sorts-list sorts)
         (add-sort)
+        (maps/google-map {:center {:lat 60 :lng 10},
+                     :zoom 12}
+          (maps/marker {:lat 60 :lng 10})
+          (maps/marker {:lat 60.01 :lng 10.01}))))))
 
 (def app (om/factory App))
 
